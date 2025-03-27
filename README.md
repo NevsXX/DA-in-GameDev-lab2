@@ -57,26 +57,69 @@
 -Визуализация изменения здоровья на примере графика:
 ![image](https://github.com/user-attachments/assets/895d9139-3289-4159-81b3-1540c95efd97)
 
-Ссылка на таблицу: https://docs.google.com/spreadsheets/d/1cDCovFP_u4gPSnVogPoacrU2tkOMXwu-z_C7A_OJ_YI/edit?gid=0#gid=0
+Ссылка на таблицу: https://docs.google.com/spreadsheets/d/1dJ7N0xdNUdQNl6_OsvEXfv9R4yB5kmQx6NBtpYE5uoc/edit?gid=0#gid=0
 ```Python
 import gspread
-import numpy as np
-gc = gspread.service_account(filename='unitydatascience-454511-04e86acaa808.json')
-sh = gc.open('Lab2Unity')
-coins = 0
-i = 1
-while i < 4:
-    sh.sheet1.update_acell('A' + str(i), str(i))
-    if i==1:
-      coins+=6       
-    else: coins += 1
-    sh.sheet1.update_acell('B' + str(i), str(coins)) 
-    i += 1
-```
-О проблемах связанных с начислением игровой валюты:
--Непонятно начисление после первого убийства, из 10 игры в первых 6 начислялось по 40 монет, в дальнейших по 6, то есть решением было бы, написанная легенда о правилах начисления монет.
--Также не сбалансированное начисление, за каждое убийство ты получаешь 1 монету, чтобы накопить на самое дешевое оружие в магазине надо сделать 600 убийств, что я считаю очень сложным к достижению, тут два варианта, либо изменение цен в магазине, либо увелечение начисление за каждое убийство, также как вариант можно рассмотреть получения моент за выполнение как либо достижений, то есть например: сделал 5 хедшотов подряд получил 50 монет.
+from oauth2client.service_account import ServiceAccountCredentials
 
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("manifest-ocean-454918-u5-2e0d7133b1d4.json", scope)
+client = gspread.authorize(creds)
+
+spreadsheet = client.open("UnityWorkShop2")
+sheet = spreadsheet.sheet1
+
+# Начальные параметры
+base_hp = 30
+current_hp = base_hp
+level = 0
+hits_taken = 0
+kills = 0
+perks = 0  # Количество перков
+vampirism = 0
+next_level_threshold = 4  # Уровень дается за каждые 6 убийств
+
+# Очистка таблицы и запись заголовков
+sheet.clear()
+sheet.update("A1:F1", [["Step", "Level", "HP", "Hits Taken", "Kills", "Perks"]])
+
+# Игровой процесс на 19 шагов
+for step in range(1, 20):
+
+    # Каждые 3 шага — новый уровень + перки
+    if kills >= next_level_threshold:
+        level += 1
+        perks += 1
+        current_hp += 10
+        if perks % 2 != 0: vampirism += 1
+        next_level_threshold += 2  # Усложнение получения уровня
+
+    #действия при шагах
+    if step % 3 == 0:
+        current_hp = current_hp - 10 + (vampirism * 3)
+        hits_taken += 1
+        kills += 2
+        
+        
+    if current_hp == 0:
+        sheet.append_row([step, level, current_hp, hits_taken, kills, perks])
+        print(f"Шаг {step}: Уровень {level}, HP {current_hp}, Удары {hits_taken}, Убийства {kills}, Перки {perks}")
+        break
+
+    else:
+        # HP не может быть меньше 0
+        current_hp = max(current_hp, 0)
+        # Запись данных в таблицу
+        sheet.append_row([step, level, current_hp, hits_taken, kills, perks])
+        print(f"Шаг {step}: Уровень {level}, HP {current_hp}, Удары {hits_taken}, Убийства {kills}, Перки {perks}")
+```
+Проблемы статы здоровья:
+- Если посмотреть на график, то можно заметить сильный скачок относительно здоровья и получении урона, это говорит о том, что на начальных этапах игры здоровье плохо сбалансированно.
+
+Как улучшить:
+- Можно уменьшить поступаемый урон на начальных этапах игры и постепенно увеличивать его с достижением новых волн
+- Увеличить начальный запас здоровья
+- Установить максимум перку по увеличению общего количества здоровья, чтобы на поздних этапах игры становилось сложнее
 
 ## Задание 3
 ### Настройте на сцене Unity воспроизведение звуковых файлов, описывающих динамику изменения выбранной переменной. Например, если выбрано здоровье главного персонажа вы можете выводить сообщения, связанные с его состоянием.
