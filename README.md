@@ -125,10 +125,10 @@ for step in range(1, 20):
 ### Настройте на сцене Unity воспроизведение звуковых файлов, описывающих динамику изменения выбранной переменной. Например, если выбрано здоровье главного персонажа вы можете выводить сообщения, связанные с его состоянием.
 Ход работы:
 - Для реализации данного задания я выделил правильно по которым описывается динамика изменения здоровья:
-    - Если игровой валюты хвататает на покупку, самого дорого оружия в магазине(coins = 10 000), то воспроизводится звук "хорошо"
-    - Если игровой валюты хвататает на покупку, самого дешевого оружия в магазине(coins = 600), то воспроизводится звук "средне"
-    - Если игровой валюты не хвататает на покупку, патронов в магазине (coins < 5), то воспроизводится звук "плохо"
-- Для отображения этой динамики в Unity я создал компонент с таким скриптом (Это скрипт из методички, с небольшими изменениями):
+    - Если здоровье на уровне от 30 и выше, то проиграется "хороший" звук и в консоли будет выведена информация что здоровье на отличном уровне
+    - Если здоровье находится на значениях от 11 до 29, то проиграется "средний" звук и будет выведена информация, что здоровье на среднем уровне
+    - Если здоровье находится ниже 10, то проиграется "плохой" звук и будет выведена информация об опасности, так как остался один удар до смерти
+- Использовался следующий скрипт:
 ```C#
 using System.Collections;
 using System.Collections.Generic;
@@ -155,30 +155,31 @@ public class NewBehaviourScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (dataSet.Count == 0) return ;
-
-        if (dataSet["Mon_" + i.ToString()] == 10000  & statusStart == false & i != dataSet.Count)
+        if (dataSet["Mon_" + i.ToString()] >= 30 & statusStart == false & i != dataSet.Count)
         {
             StartCoroutine(PlaySelectAudioGood());
             Debug.Log(dataSet["Mon_" + i.ToString()]);
+            Debug.Log("Здоровье на отличном уровне");
         }
 
-        if (dataSet["Mon_" + i.ToString()] == 600 & statusStart == false & i != dataSet.Count)
+        if (dataSet["Mon_" + i.ToString()] > 10 & dataSet["Mon_" + i.ToString()] < 30 & statusStart == false & i != dataSet.Count)
         {
             StartCoroutine(PlaySelectAudioNormal());
             Debug.Log(dataSet["Mon_" + i.ToString()]);
+            Debug.Log("Здоровье на среднем уровне");
         }
 
-        if (dataSet["Mon_" + i.ToString()] < 5 & statusStart == false & i != dataSet.Count)
+        if (dataSet["Mon_" + i.ToString()] <=10 & statusStart == false & i != dataSet.Count)
         {
             StartCoroutine(PlaySelectAudioBad());
             Debug.Log(dataSet["Mon_" + i.ToString()]);
+            Debug.Log("Вы в опасности");
         }
     }
 
     IEnumerator GoogleSheets()
     {
-        UnityWebRequest curentResp = UnityWebRequest.Get("https://sheets.googleapis.com/v4/spreadsheets/1zveTVn6nZdWTtuBqLlO_PmKmV9gEts89cSWNd-XlWFY/values/Лист1?key=AIzaSyAY025NahCQGwDFeFa7uJYgIBuRut70nVs");
+        UnityWebRequest curentResp = UnityWebRequest.Get("https://sheets.googleapis.com/v4/spreadsheets/1dJ7N0xdNUdQNl6_OsvEXfv9R4yB5kmQx6NBtpYE5uoc/values/Лист1?key=AIzaSyA8TbiL2dzpg4w5h24NT-sHcMcowPCgJYE");
         yield return curentResp.SendWebRequest();
         string rawResp = curentResp.downloadHandler.text;
         var rawJson = JSON.Parse(rawResp);
@@ -223,11 +224,12 @@ public class NewBehaviourScript : MonoBehaviour
 }
 ```
 - Как видно на изображении ниже, скрипт работает без проблем
-![image](https://github.com/user-attachments/assets/dac14018-e79c-4f2d-85db-deee40536259)
+![image](https://github.com/user-attachments/assets/b97578ee-a05b-4880-8b9b-0439559ba368)
+
 
 ## Выводы
 
-В ходе работы я научился ананлизировать ресурсы определенной игре, визуализировать изменения и поведения этого ресурса, с помощью соотвествующих схем и ПО
+В ходе работы я научился писать скрипты на python и связывать их с гугл таблицами, которые в свою очередь можно использовать для прочтения и вывода чего-либо в unity.
 
 | Plugin | README |
 | ------ | ------ |
